@@ -14,6 +14,7 @@ JSON only. No live data access.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -33,6 +34,35 @@ DIMENSIONS = [
 # not support reliable URL anchors to an individual cell, so we link to the
 # notebook and surface the offending cell number(s) in a separate column.
 _FABRIC_BASE_URL = "https://app.fabric.microsoft.com"
+
+# Capacity SKU classification (kept local so the in-Fabric gold notebook has no
+# analyzers dependency). The admin/capacities API also returns the per-user
+# "Premium Per User - Reserved" (PP3) system reservation; it is real but is NOT
+# a dedicated capacity you provision/pause, so we label it so the report can
+# distinguish it from F-SKU/P-SKU dedicated capacities.
+_PPU_SKU_RE = re.compile(r"^PP\d", re.IGNORECASE)
+_FABRIC_SKU_RE = re.compile(r"^F\d", re.IGNORECASE)
+_PREMIUM_SKU_RE = re.compile(r"^P\d", re.IGNORECASE)
+_EMBEDDED_SKU_RE = re.compile(r"^A\d", re.IGNORECASE)
+
+
+def _capacity_kind(sku: Optional[str]) -> str:
+    s = (sku or "").strip()
+    if _PPU_SKU_RE.match(s) or "premiumperuser" in s.lower().replace(" ", ""):
+        return "Premium Per User"
+    if _FABRIC_SKU_RE.match(s):
+        return "Fabric"
+    if _PREMIUM_SKU_RE.match(s):
+        return "Premium"
+    if _EMBEDDED_SKU_RE.match(s):
+        return "Embedded"
+    if "trial" in s.lower():
+        return "Trial"
+    return "Other"
+
+
+def _is_dedicated_capacity(sku: Optional[str]) -> bool:
+    return _capacity_kind(sku) in ("Fabric", "Premium", "Embedded")
 
 
 def _rule_descriptions() -> Dict[str, str]:
@@ -370,11 +400,14 @@ def build_gold(
     # ---- gold_capacities ----------------------------------------------
     cap = _load(raw, "capacity_metrics.json") or {}
     for c in cap.get("capacities") or []:
+        sku = c.get("sku")
         tables["gold_capacities"].append(_coerce_row("gold_capacities", {
             **meta,
             "capacity_id": c.get("id"),
             "capacity_name": c.get("displayName") or c.get("name"),
-            "sku": c.get("sku"),
+            "sku": sku,
+            "kind": _capacity_kind(sku),
+            "is_dedicated": _is_dedicated_capacity(sku),
             "state": c.get("state"),
             "region": c.get("region"),
         }))
@@ -501,7 +534,7 @@ def build_gold(
                 "workspace_name": workspace_name,
                 "table_name": tname,
                 "column_name": cname,
-                "qualified_column": f"{tname}[{cname}]" if tname else cname,
+                "qualified_column": f"{cname} ({tname})" if tname else cname,
                 "data_type": _vp_str(c, "data_type", "type"),
                 "encoding": _vp_str(c, "encoding", "column_encoding", "encoding_hint"),
                 "cardinality": _vp_int(c, "cardinality", "column_cardinality"),
@@ -811,11 +844,21 @@ def build_gold(
         if eid in edge_seen:
             return
         edge_seen.add(eid)
+        # Curated data-lineage chain for the Estate Map Sankey:
+        #   Capacity --hosts--> Workspace --contains--> SemanticModel --feeds--> Report.
+        # Structural 'contains' edges to notebooks/pipelines/lakehouses and the
+        # owner 'administers' edges are excluded so the flow stays readable; they
+        # remain available in the node-inventory bar and the edge table.
+        is_lineage = (
+            rel == "hosts"
+            or rel == "feeds"
+            or (rel == "contains" and target_type == "SemanticModel")
+        )
         tables["gold_graph_edges"].append(_coerce_row("gold_graph_edges", {
             **meta, "edge_id": eid,
             "source_id": sid, "source_name": source_name, "source_type": source_type,
             "target_id": tid, "target_name": target_name, "target_type": target_type,
-            "relationship": rel,
+            "relationship": rel, "is_lineage": is_lineage,
         }))
 
     # Capacity nodes (sized by how many workspaces they host).

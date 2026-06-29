@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List
 
-from analyzers._common import load_raw, load_rules, make_finding, missing_raw_finding, threshold, write_findings
+from analyzers._common import load_raw, load_rules, make_finding, missing_raw_finding, threshold, write_findings, is_dedicated_capacity
 
 NONPROD_PATTERN = re.compile(r"(dev|test|qa|uat|sbx|sandbox|poc|demo)", re.IGNORECASE)
 PROD_PATTERN = re.compile(r"(prod|production|live)", re.IGNORECASE)
@@ -51,7 +51,8 @@ def analyze(raw_dir: str | os.PathLike = "output/raw",
             findings.append(missing_raw_finding(rule, "cost", "capacity_metrics.json"))
         else:
             empties = [c for c in capacities if c.get("assignedWorkspaceCount", 0) == 0
-                       and (c.get("state") or "").lower() == "active"]
+                       and (c.get("state") or "").lower() == "active"
+                       and is_dedicated_capacity(c.get("sku"))]
             status = "pass" if not empties else "fail"
             findings.append(make_finding(
                 rule, dimension="cost", status=status,

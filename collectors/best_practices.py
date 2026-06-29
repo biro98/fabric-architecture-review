@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -99,10 +100,12 @@ def _capacity_readiness(labs: Any) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for r in rows:
         sku = str(r.get("sku") or r.get("Sku") or r.get("SKU") or "")
+        # Only legacy Premium P-SKUs (P1/P2/P3...) need P->F migration. The PPU
+        # reservation SKU (PP3) also starts with 'P' but must NOT be flagged.
         out.append({
             "capacity": r.get("name") or r.get("Display Name") or r.get("capacity"),
             "sku": sku,
-            "needs_migration": sku.upper().startswith("P"),
+            "needs_migration": bool(re.match(r"^P\d", sku.upper())),
         })
     return out
 

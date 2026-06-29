@@ -647,7 +647,29 @@ def _latest_run_filter(page: str) -> Dict[str, Any]:
     }
 
 
-# ---- page assembly -------------------------------------------------------
+def _estate_lineage_filter(page: str) -> Dict[str, Any]:
+    """Restrict the Estate Map Sankey to the curated data-lineage chain.
+
+    Keeps only ``gold_graph_edges`` rows flagged ``is_lineage = true`` (Capacity
+    -> Workspace -> Semantic model -> Report). The structural ``contains`` edges
+    to notebooks/pipelines/lakehouses and the owner edges are dropped so the flow
+    reads as one clean story instead of a hairball. The Sankey is the only
+    ``gold_graph_edges`` visual on the page besides the edge-count card, so this
+    page filter does not affect the node inventory or risk visuals.
+    """
+    return {
+        "name": _id(page, "filter", "lineage"),
+        "field": {"Column": {"Expression": {"SourceRef": {"Entity": "gold_graph_edges"}}, "Property": "is_lineage"}},
+        "type": "Categorical",
+        "filter": {
+            "Version": 2,
+            "From": [{"Name": "e", "Entity": "gold_graph_edges", "Type": 0}],
+            "Where": [{"Condition": {"In": {
+                "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "is_lineage"}}],
+                "Values": [[{"Literal": {"Value": "true"}}]],
+            }}}],
+        },
+    }
 
 # Shared grid: a brand banner (y=12..76), a KPI/slicer row (y=88..198) and a
 # content area below (y=210..704).
@@ -1054,7 +1076,7 @@ def _estate_map_page() -> Dict[str, Any]:
         ("atrisk", "Workspaces at Risk", "At risk (amber+red)", "gold_workspace_risk"),
         ("avgrisk", "Average Risk Score", "Avg risk score", "gold_workspace_risk"),
         ("nodecount", "Node Count", "Estate items", "gold_graph_nodes"),
-        ("edgecount", "Relationship Count", "Relationships", "gold_graph_edges"),
+        ("edgecount", "Relationship Count", "Lineage links", "gold_graph_edges"),
     ]
     x = 16
     for i, (key, measure, label, entity) in enumerate(kpis):
@@ -1091,10 +1113,10 @@ def _estate_map_page() -> Dict[str, Any]:
     visuals.append(_sankey(
         page, "lineage", "gold_graph_edges", "source_name", "target_name",
         "Relationship Count", 352, band2_y, PAGE_W - 352 - 16, band2_h,
-        "Lineage flow — source to target", 10, measure=True,
+        "Lineage flow — capacity → workspace → model → report", 10, measure=True,
     ))
     return {"name": page, "display": "Estate Map", "visuals": visuals,
-            "filters": [_latest_run_filter(page)]}
+            "filters": [_latest_run_filter(page), _estate_lineage_filter(page)]}
 
 
 def _notebook_page() -> Dict[str, Any]:
@@ -1345,10 +1367,10 @@ def _pages() -> List[Dict[str, Any]]:
                          "cols": ["workspace_name", "model_name", "storage_mode"]}),
         _dimension_page("performance", "Performance",
                         {"entity": "gold_capacities", "title": "Capacities",
-                         "cols": ["capacity_name", "sku", "state", "region"]}),
+                         "cols": ["capacity_name", "sku", "kind", "state", "region"]}),
         _dimension_page("cost", "Cost",
                         {"entity": "gold_capacities", "title": "Capacities",
-                         "cols": ["capacity_name", "sku", "state", "region"]}),
+                         "cols": ["capacity_name", "sku", "kind", "state", "region"]}),
         _dimension_page("governance", "Governance",
                         {"entity": "gold_workspaces", "title": "Workspaces",
                          "cols": ["workspace_name", "on_capacity", "item_count"]}),

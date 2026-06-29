@@ -99,10 +99,14 @@ GOLD_TABLES: List[Table] = [
             _c("capacity_id"),
             _c("capacity_name"),
             _c("sku"),
+            _c("kind"),
+            _c("is_dedicated", "boolean"),
             _c("state"),
             _c("region"),
         ],
-        "Fabric capacities seen at scan time.",
+        "Capacities seen at scan time. 'kind' classifies the SKU "
+        "(Fabric / Premium / Premium Per User / Embedded / Trial); "
+        "'is_dedicated' is false for the per-user PPU reservation.",
     ),
     Table(
         "gold_workspaces",
@@ -282,9 +286,11 @@ GOLD_TABLES: List[Table] = [
             _c("target_name"),
             _c("target_type"),
             _c("relationship"),
+            _c("is_lineage", "boolean"),
         ],
         "Directed relationships between estate nodes (Capacity->Workspace, "
-        "Workspace->Model/Notebook/Pipeline/Lakehouse, Model->Report, Owner->Workspace).",
+        "Workspace->Model/Notebook/Pipeline/Lakehouse, Model->Report, Owner->Workspace). "
+        "is_lineage marks the curated data-lineage chain Capacity->Workspace->Model->Report.",
     ),
     Table(
         "gold_workspace_risk",

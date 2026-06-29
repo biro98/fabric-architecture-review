@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -20,6 +21,48 @@ def load_rules(checklist_path: str | Path) -> Dict[str, Dict[str, Any]]:
     with p.open("r", encoding="utf-8-sig") as f:
         raw = yaml.safe_load(f)
     return {r["id"]: r for r in raw.get("rules", [])}
+
+
+# ---------------------------------------------------------------------------
+# Capacity SKU classification
+# ---------------------------------------------------------------------------
+# The admin/capacities API returns every capacity the tenant can see, including
+# the per-user "Premium Per User - Reserved" (PP3) system reservation that backs
+# PPU workspaces. PPU is NOT a dedicated capacity you provision, size, pause or
+# pay an idle SKU charge for, so dedicated-capacity rules (empty-SKU spend,
+# P-SKU->F-SKU migration) must exclude it. ``capacity_kind`` is the single
+# source of truth for that distinction.
+_PPU_SKU_RE = re.compile(r"^PP\d", re.IGNORECASE)       # Premium Per User (PP3)
+_FABRIC_SKU_RE = re.compile(r"^F\d", re.IGNORECASE)     # Fabric F-SKU
+_PREMIUM_SKU_RE = re.compile(r"^P\d", re.IGNORECASE)    # legacy Premium P1/P2/P3
+_EMBEDDED_SKU_RE = re.compile(r"^A\d", re.IGNORECASE)   # Power BI Embedded A-SKU
+
+
+def capacity_kind(sku: str | None) -> str:
+    """Classify a capacity SKU into a human-readable kind.
+
+    Returns one of: ``Fabric``, ``Premium``, ``Premium Per User``,
+    ``Embedded``, ``Trial`` or ``Other``. PPU is checked first because its SKU
+    (``PP3``) starts with 'P' and must not be mistaken for a legacy P-SKU.
+    """
+    s = (sku or "").strip()
+    if _PPU_SKU_RE.match(s) or "premiumperuser" in s.lower().replace(" ", ""):
+        return "Premium Per User"
+    if _FABRIC_SKU_RE.match(s):
+        return "Fabric"
+    if _PREMIUM_SKU_RE.match(s):
+        return "Premium"
+    if _EMBEDDED_SKU_RE.match(s):
+        return "Embedded"
+    if "trial" in s.lower():
+        return "Trial"
+    return "Other"
+
+
+def is_dedicated_capacity(sku: str | None) -> bool:
+    """True for capacities you provision and pay an idle SKU charge for
+    (Fabric F, legacy Premium P, Embedded A). PPU and Trial are excluded."""
+    return capacity_kind(sku) in ("Fabric", "Premium", "Embedded")
 
 
 # ---------------------------------------------------------------------------
