@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from reports.powerbi.schema import GOLD_TABLES_BY_NAME, SEVERITY_RANK
+from reports.version import build_release_record
 
 DIMENSIONS = [
     "architecture",
@@ -319,6 +320,10 @@ def build_gold(
     client_name: str = "",
     engagement_name: str = "",
     reviewer_name: str = "",
+    deployed_version: str | None = None,
+    repo_url: str = "",
+    branch: str = "main",
+    check_remote: bool = True,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Build every gold table as a list of column-aligned row dicts."""
     raw = Path(raw_dir)
@@ -377,6 +382,17 @@ def build_gold(
         "score": _score(rb["pass"], rb["fail"]),
         "is_latest": True,
     }))
+
+    # ---- gold_release (deployed version vs latest published) -----------
+    try:
+        release = build_release_record(
+            deployed_version, repo_url, branch, check_remote=check_remote
+        )
+    except Exception:
+        release = build_release_record(
+            deployed_version, repo_url, branch, check_remote=False
+        )
+    tables["gold_release"].append(_coerce_row("gold_release", {**meta, **release}))
 
     for dim in DIMENSIONS:
         items = [f for f in findings if (f.get("dimension") or "") == dim]
@@ -961,6 +977,10 @@ def build_gold_from_dir(
     client_name: str = "",
     engagement_name: str = "",
     reviewer_name: str = "",
+    deployed_version: str | None = None,
+    repo_url: str = "",
+    branch: str = "main",
+    check_remote: bool = True,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Convenience wrapper: read ``findings.json`` + ``raw/`` from a run folder."""
     out = Path(out_dir)
@@ -969,4 +989,6 @@ def build_gold_from_dir(
         findings, out / "raw",
         run_id=run_id, run_timestamp=run_timestamp,
         client_name=client_name, engagement_name=engagement_name, reviewer_name=reviewer_name,
+        deployed_version=deployed_version, repo_url=repo_url, branch=branch,
+        check_remote=check_remote,
     )

@@ -347,6 +347,23 @@ GOLD_TABLES: List[Table] = [
         "One row per individual Best Practice Analyzer / health violation "
         "(model BPA, report BPA, Direct Lake fallback, Delta, unused object).",
     ),
+    Table(
+        "gold_release",
+        [
+            _c("run_id"),
+            _c("run_timestamp", "dateTime"),
+            _c("deployed_version"),
+            _c("latest_version"),
+            _c("update_available", "boolean"),
+            _c("status"),
+            _c("update_note"),
+            _c("repo_url"),
+            _c("branch"),
+            _c("checked_at", "dateTime"),
+        ],
+        "One row per run - deployed FAR version vs latest published release; "
+        "backs the report version banner / update notice.",
+    ),
 ]
 
 

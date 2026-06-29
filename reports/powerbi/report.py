@@ -527,6 +527,33 @@ def _info(page: str, key: str, heading: str, body: str,
     return _textbox(page, key, paras, x, y, w, h, alt=heading, tab=tab)
 
 
+def _version_strip(page: str, tab: int) -> List[Dict[str, Any]]:
+    """A slim, data-bound release banner along the foot of the Home page.
+
+    Bound to ``gold_release`` (constrained to the latest run by the page-level
+    ``is_latest`` filter that flows through the run_id relationship), it shows the
+    deployed FAR version and, when a newer release exists, a short "update
+    available" notice. FUAM-style release awareness — purely informational, it
+    never blocks or changes the report.
+    """
+    h = 30
+    y = PAGE_H - h - 8
+    sw = 380
+    status = _visual(
+        page, "version_status", "card",
+        16, y, sw, h,
+        {"Values": {"projections": [_column("gold_release", "status")]}},
+        title="Solution version", tab=tab,
+    )
+    note = _visual(
+        page, "version_note", "card",
+        16 + sw + 8, y, PAGE_W - (16 + sw + 8) - 16, h,
+        {"Values": {"projections": [_column("gold_release", "update_note")]}},
+        tab=tab + 1,
+    )
+    return [status, note]
+
+
 # ---- navigation buttons + map tiles (FUAM-style) -------------------------
 # A FUAM-style landing "map": a grid of large coloured tiles that navigate to
 # each page on click. The page-navigation action is a button visual
@@ -919,6 +946,7 @@ def _home_page() -> Dict[str, Any]:
             page, f"quick{j}", target, qx, _ROW_KPI_Y + j * (qh + qgap), qw, qh,
             60 + j, label=label, fill=fill, font_size=12,
         ))
+    visuals += _version_strip(page, 80)
     return {
         "name": page, "display": "Home", "visuals": visuals,
         "filters": [_latest_run_filter(page)],
@@ -960,6 +988,7 @@ def _home_tiles_page() -> Dict[str, Any]:
         y = top + row * (tile_h + gap)
         visuals += _tile(page, f"tile{i}", target, title, subtitle,
                          x, y, tile_w, tile_h, color, 10 + i, 200 + i)
+    visuals += _version_strip(page, 80)
     return {"name": page, "display": "Home", "visuals": visuals,
             "filters": [_latest_run_filter(page)]}
 

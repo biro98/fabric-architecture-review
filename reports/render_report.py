@@ -24,6 +24,11 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from reports.diagrams import build_diagrams
 
+try:
+    from reports.version import __version__ as _far_version
+except Exception:  # pragma: no cover - version file should always be present
+    _far_version = "unknown"
+
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 DIMENSIONS = ["architecture", "performance", "governance", "security", "cost", "tenant_settings", "notebook_code"]
 
@@ -775,6 +780,7 @@ def render(findings_path: Path, out_path: Path, templates_dir: Path, raw_dir: Pa
         reviewer_name=os.environ.get("REVIEWER_NAME", ""),
         review_date=os.environ.get("REVIEW_DATE") or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         tenant_id=os.environ.get("TENANT_ID", ""),
+        far_version=_far_version,
         workspace_count=scope["workspaces"],
         capacity_count=scope["capacities"],
         activity_log_days=os.environ.get("ACTIVITY_LOG_DAYS", "30"),

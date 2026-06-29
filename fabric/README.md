@@ -29,6 +29,7 @@ that first if you have not yet — everything there applies here too.
 - [The gold layer + Direct Lake governance report](#-the-gold-layer--direct-lake-governance-report)
 - [Optional: Azure (ARM) auth for capacity Pause/Resume detection](#-optional-azure-arm-auth-for-capacity-pauseresume-detection)
 - [Workspace logo (optional)](#-workspace-logo-optional)
+- [Versioning & updates](#-versioning--updates)
 - [Troubleshooting](#-troubleshooting)
 
 ---
@@ -89,7 +90,8 @@ them via `@pipeline().parameters.*`, exactly the way the shared `RUN_ID` is reso
 | Parameter | Default | What it does |
 | --- | --- | --- |
 | `GITHUB_REPO_URL` | this repo's clone URL | Repo the stages clone to get the analyzer code — change it if you forked |
-| `GITHUB_BRANCH` | `main` | Branch to clone |
+| `GITHUB_BRANCH` | `main` | Branch read to discover the latest `VERSION` and used as the fallback if no release tag exists |
+| `GITHUB_REF` | resolved release tag (`v<VERSION>`) | Immutable ref every stage clones at runtime — set automatically at deploy so runs stay pinned to the deployed release (not editable per run) |
 | `SP_CLIENT_ID` / `SP_CONNECTION_NAME` | blank / `sp-fabric-arch-review` | *Optional* read-only **service principal** for unattended/scheduled baselines. You create the cloud connection **manually** (setup just prints a reminder); the secret never touches setup or pipeline params. Optionally use `SP_SECRET_KEYVAULT` + `SP_SECRET_NAME` for a Key Vault secret instead. Blank = run as the notebook's executing identity. See [auth-setup.md](../docs/auth-setup.md). |
 | `TENANT_ID` | blank | Label recorded in the report (does **not** redirect the token in Fabric) |
 | `WORKSPACE_IDS` | blank | Comma-separated workspace GUIDs to restrict the review to (blank = tenant-wide) |
@@ -247,6 +249,53 @@ PNG (Fabric crops it to a rounded tile automatically).
 3. Under **General → Workspace image** (also labelled *About* in some tenants), choose **Upload**, pick `FAR_logo.png`, then **Apply / Save**.
 
 The logo is purely cosmetic — it has no effect on the review, the data collected, or the report.
+
+---
+
+## 🔖 Versioning & updates
+
+Every release is stamped with a date-based version in the repo-root [`VERSION`](../VERSION) file
+(e.g. `2026.06.0`). When you deploy with `setup.ipynb`, that version is recorded into a small
+`meta_deployment` Delta table in your Lakehouse, so the solution always knows which release it was
+deployed from.
+
+**Where you see the version**
+
+- **Power BI report — Home page**: a slim banner along the foot shows `FAR v<version> — up to date`,
+  or **`Update available: v<newer>`** when a newer release has been published. It refreshes every time
+  the pipeline runs the gold stage (`gold_release` table).
+- **Markdown / PDF report**: the cover page lists the **FAR version** used to generate it.
+
+**How update detection works**
+
+The gold stage reads your deployed version from `meta_deployment` and best-effort fetches the latest
+`VERSION` from GitHub (`main`). If GitHub is unreachable the banner simply shows your deployed version
+with no update notice — nothing breaks offline.
+
+**Pinned releases — every run uses the version you deployed**
+
+`setup.ipynb` first clones the branch tip only to read its `VERSION`, then resolves an immutable
+**release ref** (`v<version>`, e.g. `v2026.06.0`) and pins the deployment to it: it checks out that tag,
+records `git_ref` + `git_sha` into `meta_deployment`, and passes `GITHUB_REF` to every pipeline stage.
+Each stage notebook clones **that exact ref** at runtime rather than `main`'s tip — so the code that runs
+is frozen at the deployed release and can never drift onto a newer version's schema until you deliberately
+update. If the matching tag does not exist, deploy falls back to the branch tip with a printed warning.
+
+- To deploy an **older** release, set `RELEASE_TAG` in `setup.ipynb` (e.g. `RELEASE_TAG = "v2026.05.0"`)
+  before running — leave it blank to track the tag matching the current `VERSION`.
+
+**How to update (FUAM-style — your data is safe)**
+
+1. Re-run [`setup.ipynb`](setup.ipynb). It re-clones the latest release and redeploys the notebooks,
+   pipeline, semantic model and report, then re-stamps `meta_deployment` with the new version and ref.
+2. Your Lakehouse data is **preserved** — every `gold_*` history table and all prior runs stay intact
+   (the deploy only ever *bootstraps* missing tables, it never clobbers data).
+3. **Plan for customizations:** if you hand-edited the deployed notebooks, pipeline or report, those
+   artifacts are overwritten on update — re-apply your changes afterwards (or keep them in a fork).
+
+> Maintainers: when cutting a release, bump the `VERSION` file **and** create + push the matching git
+> tag (`git tag v<VERSION> && git push origin v<VERSION>`) in the same release. The tag is what deployed
+> instances pin to; without it, deploys fall back to the unpinned branch tip.
 
 ---
 
