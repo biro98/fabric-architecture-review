@@ -1,0 +1,130 @@
+# =============================================================================
+# Thresholds — the single tuning surface for every pass / fail boundary.
+# =============================================================================
+# Analyzers load this file (analyzers/_common.py -> threshold()) and use it to
+# decide whether a rule is a PASS, FAIL, or INFO. Tune these per engagement to
+# match the client's SLOs and maturity; the defaults are sensible for a typical
+# production Fabric tenant.
+#
+# Resolution precedence (highest first):
+#   1. Environment variable (the "env:" name noted below) — set in .env, CI, or
+#      the Fabric pipeline parameters. Overrides everything.
+#   2. The value in this file.
+#   3. A built-in default inside the analyzer (matches the values here).
+#
+# The pass/fail concept is deliberately conservative: a rule only FAILS when a
+# real, actionable problem crosses a threshold a reviewer would act on. Softer
+# signals (empty/orphaned/streaming inventory, point-in-time gauges) are emitted
+# as INFO so the report highlights genuine issues instead of noise.
+# -----------------------------------------------------------------------------
+
+architecture:
+  # ARCH-005 — a workspace with MORE than this many items is "monolithic"
+  # (hard to govern, slow to deploy). 50 items is a practical ceiling for one
+  # domain workspace.   env: ARCH_MONOLITH_THRESHOLD
+  monolith_max_items: 50
+
+  # ARCH-014 — a deployment-pipeline stage whose last deployment is older than
+  # this many days is "stale" (prod running behind validated content).
+  # env: ARCH_PIPELINE_STALE_DAYS
+  pipeline_stale_days: 30
+
+  # ARCH-001 — PASS when at least this fraction of workspaces carry a medallion
+  # layer token (bronze/silver/gold/raw/...). Below it, the convention is not
+  # adopted widely enough.
+  layer_naming_min_ratio: 0.5
+
+  # ARCH-004 — PASS when at least this fraction of workspaces are Git-connected.
+  git_coverage_min_ratio: 0.5
+
+  # ARCH-006 — PASS when at least this fraction of *shared, non-empty*
+  # workspaces have a description. Personal and empty workspaces are excluded so
+  # the check reflects real documentation hygiene, not "My workspace" clutter.
+  description_coverage_min_ratio: 0.5
+
+  # ARCH-011 — FAIL when MORE than this fraction of semantic models are Import
+  # while lakehouses exist (Direct Lake would fit). 0.7 = Import clearly dominates.
+  import_dominance_ratio: 0.7
+
+performance:
+  # PERF-003 — semantic-model size bands (MB). At/over warn = FAIL; over critical
+  # is additionally surfaced as the most urgent.   2 GB warn / 8 GB critical.
+  # env: PERF_MODEL_SIZE_WARN_MB / PERF_MODEL_SIZE_CRITICAL_MB
+  model_size_warn_mb: 2048
+  model_size_critical_mb: 8192
+
+  # PERF-004 — FAIL when a model's failed-refresh ratio over its recent history
+  # reaches this fraction. 0.2 = one in five refreshes failing.
+  # env: PERF_FAIL_RATIO_THRESHOLD
+  refresh_failure_ratio: 0.2
+
+  # PERF-005 — a refreshable model with no successful refresh in this many days
+  # is "stale".   env: PERF_STALE_DAYS
+  stale_model_days: 30
+
+  # PERF-007 — FAIL when a model's average successful-refresh duration exceeds
+  # this many hours.   env: PERF_LONG_REFRESH_HOURS
+  long_refresh_hours: 2.0
+
+  # PERF-014 — two scheduled refreshes in the same workspace are "overlapping"
+  # when their start times fall within this many minutes of each other.
+  # env: PERF_REFRESH_OVERLAP_MIN
+  refresh_overlap_minutes: 2
+
+  # PERF-001 — Capacity Metrics App P95 throttling buckets (% of the future-
+  # smoothing window). At/over critical = active rejection (FAIL); at/over warn
+  # = approaching the ceiling (FAIL); between 0 and warn = headroom consumed
+  # (INFO).   env: PERF_THROTTLE_CRITICAL_PCT / PERF_THROTTLE_WARN_PCT
+  throttle_critical_pct: 100
+  throttle_warn_pct: 70
+
+  # PERF-002 — 7-day average CU%. At/over critical = FAIL (no headroom, throttling
+  # imminent); between warn and critical = INFO (watch); below warn = PASS.
+  # PERF-011 reuses cu_avg_warn_pct as the "running hot, needs autoscale" line.
+  cu_avg_warn_pct: 70
+  cu_avg_critical_pct: 80
+
+  # PERF-008 / PERF-009 — a pipeline/notebook is "failing" when its failure ratio
+  # reaches this fraction AND it has at least two failures (avoids flagging a
+  # single blip). "Long-running" when average successful duration exceeds the hours.
+  # env: PERF_JOB_FAIL_RATIO / PERF_JOB_LONG_HOURS
+  job_failure_ratio: 0.2
+  job_long_hours: 1.0
+
+governance:
+  # GOV-001 — every *shared, non-empty* workspace should have at least this many
+  # admins (no single-owner orphan risk). Personal/empty workspaces are excluded.
+  min_admins: 2
+
+  # GOV-002 — PASS when at least this fraction of items carry a sensitivity label.
+  label_coverage_min_ratio: 0.5
+
+  # GOV-003 — PASS when at least this fraction of workspaces match the naming
+  # convention (env/layer markers).
+  naming_coverage_min_ratio: 0.5
+
+  # GOV-004 — PASS when at least this fraction of workspaces are Git-connected
+  # (governance lens).
+  git_coverage_min_ratio: 0.5
+
+  # GOV-005 — FAIL when share events in the activity-log window reach this count.
+  # Tune up for large tenants where routine sharing volume is naturally higher.
+  # env: GOV_SHARE_VOLUME_THRESHOLD
+  share_volume_warn: 100
+
+security:
+  # SEC-005 — FAIL when a workspace has MORE than this many individual (non-group)
+  # principals with access — convert broad direct access to security groups.
+  # env: SEC_BROAD_ACCESS_THRESHOLD
+  broad_access_max_principals: 10
+
+  # SEC-010 — minimum acceptable on-prem / VNet gateway version. Empty string
+  # means "only check intra-cluster version consistency", not an absolute floor.
+  # Set e.g. "3000.200" to also fail members below a specific monthly release.
+  # env: SEC_GATEWAY_MIN_VERSION
+  gateway_min_version: ""
+
+cost:
+  # COST-005 — a large capacity (F64+) hosting FEWER than this many workspaces is
+  # a downsize / consolidation candidate.   env: COST_SMALL_WORKSPACE_THRESHOLD
+  large_sku_min_workspaces: 5

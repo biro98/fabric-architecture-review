@@ -1,0 +1,256 @@
+[
+  {
+    "rule_id": "ARCH-013",
+    "dimension": "architecture",
+    "severity": "high",
+    "status": "pass",
+    "title": "Scanner inventory collected completely",
+    "evidence": {
+      "workspacesCollected": 3,
+      "workspacesEligible": 3,
+      "batchesTotal": 1,
+      "scoped": false
+    },
+    "recommendation": "No action needed — every eligible workspace was scanned.",
+    "microsoft_learn_url": "https://learn.microsoft.com/rest/api/power-bi/admin/workspace-info-post-workspace-info"
+  },
+  {
+    "rule_id": "ARCH-001",
+    "dimension": "architecture",
+    "severity": "high",
+    "status": "pass",
+    "title": "Medallion / layer naming convention",
+    "evidence": {
+      "workspaceCount": 3,
+      "layeredWorkspaceCount": 2,
+      "layeredWorkspaceRatio": 0.67,
+      "workspaceExamples": [
+        "data-bronze-dev",
+        "data-gold-prod",
+        "My workspace"
+      ],
+      "lakehouseLayersByWorkspace": {
+        "data-bronze-dev": [
+          "bronze"
+        ],
+        "data-gold-prod": [
+          "gold"
+        ]
+      },
+      "workspacesWithAllLayersInside": []
+    },
+    "recommendation": "Layer-based workspace naming is in place. Continue to mirror the convention on lakehouses (lh_bronze / lh_silver / lh_gold) and on Deployment Pipeline stages.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/onelake/onelake-medallion-lakehouse-architecture"
+  },
+  {
+    "rule_id": "ARCH-002",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Workspaces without Fabric capacity assignment",
+    "evidence": {
+      "unassignedCount": 0,
+      "unassignedNames": []
+    },
+    "recommendation": "Assign every production workspace to a Fabric capacity. Pro-only / unassigned workspaces cannot host Fabric items.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/enterprise/licenses"
+  },
+  {
+    "rule_id": "ARCH-005",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Workspaces exceeding monolithic threshold (>50 items)",
+    "evidence": {
+      "threshold": 50,
+      "monolithCount": 0,
+      "monoliths": []
+    },
+    "recommendation": "Split large workspaces by domain/layer. Large workspaces complicate RBAC, deployment pipelines, and lineage analysis.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines"
+  },
+  {
+    "rule_id": "ARCH-006",
+    "dimension": "architecture",
+    "severity": "low",
+    "status": "pass",
+    "title": "Workspaces missing a description",
+    "evidence": {
+      "evaluatedWorkspaces": 2,
+      "missingDescriptionCount": 0,
+      "coverageRatio": 1.0,
+      "minRatio": 0.5,
+      "examples": []
+    },
+    "recommendation": "Add a short description to every workspace describing purpose, owner, and environment.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/get-started/create-workspaces"
+  },
+  {
+    "rule_id": "ARCH-007",
+    "dimension": "architecture",
+    "severity": "info",
+    "status": "info",
+    "title": "Empty workspaces (no items)",
+    "evidence": {
+      "emptyCount": 1,
+      "examples": [
+        "My workspace"
+      ]
+    },
+    "recommendation": "Archive or repurpose empty workspaces to keep the tenant inventory clean.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/governance/governance-overview"
+  },
+  {
+    "rule_id": "ARCH-008",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "fail",
+    "title": "Personal (My workspace) workspaces in use",
+    "evidence": {
+      "personalCount": 1,
+      "examples": [
+        "My workspace"
+      ]
+    },
+    "recommendation": "Migrate any production content out of personal workspaces into shared, capacity-backed workspaces.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/get-started/workspaces"
+  },
+  {
+    "rule_id": "ARCH-003",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "pass",
+    "title": "OneLake shortcut metadata detected (1 shortcut signal(s))",
+    "evidence": {
+      "lakehouseCount": 2,
+      "tableCount": 2,
+      "shortcutSignals": [
+        {
+          "table": "sales_fact",
+          "lakehouse": "gold_lh",
+          "workspace": "data-gold-prod",
+          "isShortcut": true
+        }
+      ],
+      "duplicateTableGroups": []
+    },
+    "recommendation": "Keep using shortcuts for cross-workspace/layer sharing and document ownership of the source tables.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/onelake/onelake-shortcuts"
+  },
+  {
+    "rule_id": "ARCH-009",
+    "dimension": "architecture",
+    "severity": "high",
+    "status": "pass",
+    "title": "1 deployment pipeline(s) configured; production workspaces covered",
+    "evidence": {
+      "pipelineCount": 1,
+      "stages": 2,
+      "productionWorkspaces": 1,
+      "uncoveredProductionWorkspaces": [],
+      "pipelines": [
+        {
+          "name": "Sales Pipeline",
+          "stageCount": 2,
+          "workspaces": [
+            "0000000b-0000-4000-8000-00000000000b",
+            "0000000c-0000-4000-8000-00000000000c"
+          ]
+        }
+      ]
+    },
+    "recommendation": "Maintain stage assignments as new workspaces are introduced.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines"
+  },
+  {
+    "rule_id": "ARCH-014",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "info",
+    "title": "Deployment pipelines present but no stage-artifact data was returned",
+    "evidence": {
+      "pipelineCount": 1,
+      "reason": "Stage artifact endpoints returned nothing (permissions or empty stages)."
+    },
+    "recommendation": "Re-run the deployment_pipelines collector with an identity that has pipeline admin rights so stage promotion state can be evaluated.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/cicd/deployment-pipelines/understand-the-deployment-process"
+  },
+  {
+    "rule_id": "ARCH-010",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "info",
+    "title": "No Real-Time Intelligence or Mirrored Database items detected",
+    "evidence": {
+      "counts": {},
+      "workspacesWithEventhouseButNoReflex": []
+    },
+    "recommendation": "If the architecture has streaming or zero-ETL requirements, evaluate Eventhouse / KQL Database (real-time analytics), Eventstream (ingest), Reflex / Activator (operational alerts) and Mirrored Databases (zero-ETL replication).",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/real-time-intelligence/overview"
+  },
+  {
+    "rule_id": "ARCH-011",
+    "dimension": "architecture",
+    "severity": "high",
+    "status": "info",
+    "title": "Semantic-model storage-mode distribution",
+    "evidence": {
+      "datasetCount": 3,
+      "modeCounts": {
+        "Import": 2,
+        "Direct Lake": 1
+      },
+      "examples": [
+        {
+          "name": "SalesModel",
+          "workspace": "data-bronze-dev",
+          "storageMode": "Import"
+        },
+        {
+          "name": "FinanceModel",
+          "workspace": "data-gold-prod",
+          "storageMode": "Import"
+        },
+        {
+          "name": "DirectLakeModel",
+          "workspace": "data-gold-prod",
+          "storageMode": "Direct Lake"
+        }
+      ]
+    },
+    "recommendation": "If many Import models read lakehouse Delta tables, evaluate Direct Lake. DirectQuery should be limited to scenarios that genuinely require it.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/get-started/direct-lake-overview"
+  },
+  {
+    "rule_id": "ARCH-012",
+    "dimension": "architecture",
+    "severity": "high",
+    "status": "info",
+    "title": "No ExecuteNotebook / TridentNotebook activities found in collected pipeline definitions",
+    "evidence": {
+      "activitiesChecked": 0,
+      "mismatchCount": 0,
+      "mismatches": [],
+      "notebookReferencesNotResolved": []
+    },
+    "recommendation": "Either no pipelines orchestrate notebooks yet, or the getDefinition calls failed (check pipeline_definitions.json 'errors'). Re-run the pipeline_definitions collector to confirm.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/data-factory/notebook-activity"
+  },
+  {
+    "rule_id": "ARCH-004",
+    "dimension": "architecture",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Workspaces connected to Git source control",
+    "evidence": {
+      "totalWorkspaces": 2,
+      "gitConnectedCount": 1,
+      "ratio": 0.5,
+      "connectedExamples": [
+        "data-gold-prod"
+      ]
+    },
+    "recommendation": "Connect production workspaces to Git for change tracking, peer review and deployment pipeline support.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/cicd/git-integration/intro-to-git-integration"
+  }
+]

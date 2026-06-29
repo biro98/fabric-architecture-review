@@ -1,0 +1,45 @@
+# Recommendations &amp; Roadmap
+
+Findings are prioritized by severity and the effort typically required to remediate them. Implement Critical and High items immediately, Medium items in the next review cycle, and Low / Info items opportunistically as part of ongoing operations.
+
+## Immediate &mdash; Critical / High
+
+{% if recs_30 %}
+| Rule | Title | Recommendation |
+|---|---|---|
+{% for f in recs_30 -%}
+| **{{ f.rule_id }}** | {{ f.title }} | {{ f.recommendation }} |
+{% endfor %}
+{% else %}
+_None &mdash; no failing Critical or High checks._
+{% endif %}
+
+## Next review cycle &mdash; Medium
+
+{% if recs_90 %}
+| Rule | Title | Recommendation |
+|---|---|---|
+{% for f in recs_90 -%}
+| **{{ f.rule_id }}** | {{ f.title }} | {{ f.recommendation }} |
+{% endfor %}
+{% else %}
+_None &mdash; no failing Medium checks._
+{% endif %}
+
+## Backlog &mdash; Low / Info
+
+{% if recs_backlog %}
+| Rule | Title |
+|---|---|
+{% for f in recs_backlog -%}
+| **{{ f.rule_id }}** | {{ f.title }} |
+{% endfor %}
+{% else %}
+_None._
+{% endif %}
+
+---
+
+## Data Safety appendix
+
+This assessment runs strictly against metadata, configuration and metrics surfaced by the Microsoft Fabric / Power BI Admin REST APIs and the Fabric Scanner API. **No customer dataset rows, report visuals, lakehouse tables, notebook contents or pipeline payloads were read.** All collector outputs are stored locally in `output/raw/` and can be deleted after the engagement.

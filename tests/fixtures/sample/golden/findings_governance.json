@@ -1,0 +1,109 @@
+[
+  {
+    "rule_id": "GOV-001",
+    "dimension": "governance",
+    "severity": "high",
+    "status": "pass",
+    "title": "Workspaces with fewer than 2 admins",
+    "evidence": {
+      "evaluatedWorkspaces": 2,
+      "minAdmins": 2,
+      "underAdminCount": 0,
+      "examples": []
+    },
+    "recommendation": "Assign at least two workspace admins (preferably via a security group) to avoid orphan risk.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/get-started/roles-workspaces"
+  },
+  {
+    "rule_id": "GOV-002",
+    "dimension": "governance",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Sensitivity label coverage",
+    "evidence": {
+      "totalItems": 4,
+      "labelledItems": 2,
+      "ratio": 0.5
+    },
+    "recommendation": "Apply sensitivity labels to datasets, reports, lakehouses, warehouses; enforce via tenant setting and Purview integration.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/governance/governance-overview"
+  },
+  {
+    "rule_id": "GOV-003",
+    "dimension": "governance",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Workspaces following documented naming convention",
+    "evidence": {
+      "workspaceCount": 3,
+      "matchingCount": 2,
+      "ratio": 0.67
+    },
+    "recommendation": "Document and enforce a naming convention combining environment + layer markers (e.g. `<domain>-<env>-<layer>`).",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/governance/information-protection"
+  },
+  {
+    "rule_id": "GOV-004",
+    "dimension": "governance",
+    "severity": "low",
+    "status": "pass",
+    "title": "Workspaces under source control (governance view)",
+    "evidence": {
+      "totalWorkspaces": 2,
+      "gitConnectedCount": 1,
+      "ratio": 0.5
+    },
+    "recommendation": "Require Git integration on all production workspaces — provides audit trail and rollback for governance evidence.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/governance/governance-overview"
+  },
+  {
+    "rule_id": "GOV-005",
+    "dimension": "governance",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Sharing events in last 7 day(s)",
+    "evidence": {
+      "shareEventCount": 3,
+      "threshold": 100,
+      "topSharers": [
+        {
+          "principal": "user-0002@contoso.example",
+          "count": 2
+        },
+        {
+          "principal": "user-0001@contoso.example",
+          "count": 1
+        }
+      ]
+    },
+    "recommendation": "Review high-volume sharers; enforce sharing via Apps + security groups rather than ad-hoc per-report sharing.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/admin/track-user-activities"
+  },
+  {
+    "rule_id": "GOV-006",
+    "dimension": "governance",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Workspaces with content but no activity in last 7 day(s)",
+    "evidence": {
+      "windowDays": 7,
+      "orphanedCount": 0,
+      "examples": []
+    },
+    "recommendation": "Confirm the owner; if the workspace is no longer used, archive it to reduce attack surface and capacity load.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/admin/track-user-activities"
+  },
+  {
+    "rule_id": "GOV-007",
+    "dimension": "governance",
+    "severity": "medium",
+    "status": "pass",
+    "title": "Fabric Capacity Metrics app is installed",
+    "evidence": {
+      "installed": true,
+      "source": "env:CAPACITY_METRICS_APP_INSTALLED"
+    },
+    "recommendation": "Install the Microsoft Fabric Capacity Metrics app so capacity CU, throttling, and overload events can be monitored over time - it is the primary tool for diagnosing capacity health and right-sizing.",
+    "microsoft_learn_url": "https://learn.microsoft.com/fabric/enterprise/metrics-app-install"
+  }
+]

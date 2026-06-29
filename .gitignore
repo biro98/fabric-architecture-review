@@ -1,0 +1,46 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Engagement output — may contain customer-identifying metadata
+output/*
+!output/.gitkeep
+
+# Raw API dumps (also under output/, but defense in depth)
+**/raw/
+**/*.raw.json
+**/scanner-*.json
+**/tenant-settings-*.json
+**/activity-log-*.json
+
+# Test fixtures are fully synthetic (invented GUIDs/emails + source, no customer data)
+# and safe to commit — override the generic output/raw ignores above.
+!tests/fixtures/sample/raw/
+!tests/fixtures/sample/raw/**
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (Puppeteer)
+node_modules/
+
+# Local-only cover logo / brand assets (keep brand images out of the repo)
+reports/images/*.png

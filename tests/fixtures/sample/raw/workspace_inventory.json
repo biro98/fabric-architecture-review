@@ -1,0 +1,33 @@
+{
+  "workspaces": [
+    {
+      "id": "0000000b-0000-4000-8000-00000000000b",
+      "name": "data-bronze-dev",
+      "items": [
+        {
+          "name": "SalesModel"
+        },
+        {
+          "name": "Sales Overview"
+        }
+      ]
+    },
+    {
+      "id": "0000000c-0000-4000-8000-00000000000c",
+      "name": "data-gold-prod",
+      "items": [
+        {
+          "name": "FinanceModel"
+        },
+        {
+          "name": "DirectLakeModel"
+        }
+      ]
+    },
+    {
+      "id": "0000000d-0000-4000-8000-00000000000d",
+      "name": "My workspace",
+      "items": []
+    }
+  ]
+}

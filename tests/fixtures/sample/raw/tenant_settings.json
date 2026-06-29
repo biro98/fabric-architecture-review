@@ -1,0 +1,66 @@
+{
+  "tenantSettings": [
+    {
+      "settingName": "PublishToWeb",
+      "title": "PublishToWeb",
+      "enabled": true,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "ExportData",
+      "title": "ExportData",
+      "enabled": false,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "CreateFabricItem",
+      "title": "CreateFabricItem",
+      "enabled": true,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [
+        "00000033-0000-4000-8000-000000000033"
+      ],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "ServicePrincipalAccess",
+      "title": "ServicePrincipalAccess",
+      "enabled": true,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [
+        "00000033-0000-4000-8000-000000000033"
+      ],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "AllowExternalDataSharing",
+      "title": "AllowExternalDataSharing",
+      "enabled": true,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "CustomVisualsTenantSettings",
+      "title": "CustomVisualsTenantSettings",
+      "enabled": true,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [
+        "00000033-0000-4000-8000-000000000033"
+      ],
+      "excludedSecurityGroups": []
+    },
+    {
+      "settingName": "RScriptVisualsTenantSettings",
+      "title": "RScriptVisualsTenantSettings",
+      "enabled": false,
+      "canSpecifySecurityGroups": true,
+      "enabledSecurityGroups": [],
+      "excludedSecurityGroups": []
+    }
+  ]
+}
