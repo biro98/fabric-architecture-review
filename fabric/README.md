@@ -28,6 +28,7 @@ that first if you have not yet — everything there applies here too.
 - [Pipeline parameters (selectable at run time)](#-pipeline-parameters-selectable-at-run-time)
 - [The gold layer + Direct Lake governance report](#-the-gold-layer--direct-lake-governance-report)
 - [Optional: Azure (ARM) auth for capacity Pause/Resume detection](#-optional-azure-arm-auth-for-capacity-pauseresume-detection)
+- [Workspace logo (optional)](#-workspace-logo-optional)
 - [Troubleshooting](#-troubleshooting)
 
 ---
@@ -224,6 +225,28 @@ data-plane (storage/DB) access is involved.
 > tenant/subscriptions the ARM token can read. If the capacity lives in a subscription that identity
 > cannot read, sign in to the tenant that owns it before running the local collect. The framework does
 > not ship a separate ARM service principal.
+
+---
+
+## 🎨 Workspace logo (optional)
+
+A ready-made logo ships with the accelerator so you can brand the Fabric workspace you run the
+review in — it makes the workspace easy to spot in the Fabric portal.
+
+<p align="center">
+  <img src="assets/FAR_logo.png" alt="Fabric Architecture Review logo" width="160">
+</p>
+
+The asset lives at [`fabric/assets/FAR_logo.png`](assets/FAR_logo.png) — a square, transparent‑background
+PNG (Fabric crops it to a rounded tile automatically).
+
+**Set it as the workspace image:**
+
+1. **Download** the logo: open [`fabric/assets/FAR_logo.png`](assets/FAR_logo.png) on GitHub → **Download raw file** (or right‑click the preview above → *Save image as…*).
+2. In Fabric, open your workspace → **Workspace settings** (the gear, or *⋯ → Workspace settings*).
+3. Under **General → Workspace image** (also labelled *About* in some tenants), choose **Upload**, pick `FAR_logo.png`, then **Apply / Save**.
+
+The logo is purely cosmetic — it has no effect on the review, the data collected, or the report.
 
 ---
 
