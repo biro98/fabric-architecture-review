@@ -290,24 +290,26 @@ def _bpa_measures() -> List[Dict[str, Any]]:
 
 
 def _release_measures() -> List[Dict[str, Any]]:
-    """Deployed-version banner measures placed on ``gold_release``.
+    """Deployed-version banner measure placed on ``gold_release``.
 
     A ``card`` visual needs an aggregated value, so the Home-page version banner
-    binds to these measures rather than the raw text columns (a bare column on a
-    card renders blank in Direct Lake). Each measure returns the value from the
-    most recently recorded release row (max ``checked_at``), independent of any
-    run slicer / page filter, so the banner always reflects the live deployment.
+    binds to this measure rather than the raw text columns (a bare column on a
+    card renders blank in Direct Lake). It reads the most recently recorded
+    release row (max ``checked_at``), independent of any run slicer / page
+    filter, and folds the upgrade note (only present when a newer release exists)
+    into the same string so the footer is always a single, non-empty line.
     """
-    _latest = (
+    expr = (
         "VAR _ts = MAXX(ALL(gold_release), gold_release[checked_at]) "
-        "RETURN MAXX(FILTER(ALL(gold_release), gold_release[checked_at] = _ts), gold_release[{col}])"
+        "VAR _row = FILTER(ALL(gold_release), gold_release[checked_at] = _ts) "
+        "VAR _status = MAXX(_row, gold_release[status]) "
+        "VAR _note = MAXX(_row, gold_release[update_note]) "
+        'RETURN _status & IF(NOT ISBLANK(_note) && LEN(_note) > 0, "   |   " & _note, "")'
     )
     defs = [
-        ("Release Status", _latest.format(col="status"), "",
-         "Deployed FAR version banner text from the latest release row "
-         "(e.g. 'FAR v2026.06.0 - up to date' or 'Update available: ...')."),
-        ("Release Note", _latest.format(col="update_note"), "",
-         "Short upgrade note shown beside the version banner when a newer release exists (blank otherwise)."),
+        ("Release Banner", expr, "",
+         "Deployed FAR version line for the Home-page footer card "
+         "(e.g. 'FAR v2026.06.0 - up to date'); appends the upgrade note when a newer release exists."),
     ]
     out = []
     for name, expr, fmt, desc in defs:

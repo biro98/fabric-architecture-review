@@ -530,28 +530,32 @@ def _info(page: str, key: str, heading: str, body: str,
 def _version_strip(page: str, tab: int) -> List[Dict[str, Any]]:
     """A slim, data-bound release banner along the foot of the Home page.
 
-    Bound to ``gold_release`` (constrained to the latest run by the page-level
-    ``is_latest`` filter that flows through the run_id relationship), it shows the
-    deployed FAR version and, when a newer release exists, a short "update
-    available" notice. FUAM-style release awareness — purely informational, it
-    never blocks or changes the report.
+    A single ``card`` bound to ``gold_release[Release Banner]`` (latest row,
+    filter-independent). The callout value is styled down to a small caption so
+    it reads as a footer line rather than a giant KPI, and the upgrade note is
+    folded into the same measure so there is never an empty second card. Purely
+    informational FUAM-style release awareness; it never blocks the report.
     """
-    h = 30
+    h = 44
     y = PAGE_H - h - 8
-    sw = 380
-    status = _visual(
+    v = _visual(
         page, "version_status", "card",
-        16, y, sw, h,
-        {"Values": {"projections": [_measure("gold_release", "Release Status")]}},
+        16, y, PAGE_W - 32, h,
+        {"Values": {"projections": [_measure("gold_release", "Release Banner")]}},
         title="Solution version", tab=tab,
     )
-    note = _visual(
-        page, "version_note", "card",
-        16 + sw + 8, y, PAGE_W - (16 + sw + 8) - 16, h,
-        {"Values": {"projections": [_measure("gold_release", "Release Note")]}},
-        tab=tab + 1,
-    )
-    return [status, note]
+    # Shrink the callout value to a caption-sized footer line (cards default to a
+    # huge KPI font) and drop the redundant category label.
+    obj = v["visual"]["objects"]
+    obj["labels"] = [{"properties": {
+        "color": _solid(MUTED),
+        "fontFamily": _lit("'Segoe UI'"),
+        "fontSize": _lit("11D"),
+        "labelDisplayUnits": _lit("0D"),
+    }}]
+    obj["categoryLabels"] = [{"properties": {"show": _lit("false")}}]
+    obj["wordWrap"] = [{"properties": {"show": _lit("true")}}]
+    return [v]
 
 
 # ---- navigation buttons + map tiles (FUAM-style) -------------------------
