@@ -542,13 +542,13 @@ def _version_strip(page: str, tab: int) -> List[Dict[str, Any]]:
     status = _visual(
         page, "version_status", "card",
         16, y, sw, h,
-        {"Values": {"projections": [_column("gold_release", "status")]}},
+        {"Values": {"projections": [_measure("gold_release", "Release Status")]}},
         title="Solution version", tab=tab,
     )
     note = _visual(
         page, "version_note", "card",
         16 + sw + 8, y, PAGE_W - (16 + sw + 8) - 16, h,
-        {"Values": {"projections": [_column("gold_release", "update_note")]}},
+        {"Values": {"projections": [_measure("gold_release", "Release Note")]}},
         tab=tab + 1,
     )
     return [status, note]

@@ -40,6 +40,8 @@ HIERARCHY_TABLE = "gold_model_hierarchies"
 BPA_TABLE = "gold_bpa_violations"
 # Table that carries the severity heatmap data + its colour measure.
 SEVERITY_MATRIX_TABLE = "gold_severity_matrix"
+# Table that carries the deployed-version banner measures (Home page footer).
+RELEASE_TABLE = "gold_release"
 
 # Columns that hold http(s) links; flagged as Web URLs so report tables render
 # them as clickable hyperlinks.
@@ -287,6 +289,38 @@ def _bpa_measures() -> List[Dict[str, Any]]:
     return out
 
 
+def _release_measures() -> List[Dict[str, Any]]:
+    """Deployed-version banner measures placed on ``gold_release``.
+
+    A ``card`` visual needs an aggregated value, so the Home-page version banner
+    binds to these measures rather than the raw text columns (a bare column on a
+    card renders blank in Direct Lake). Each measure returns the value from the
+    most recently recorded release row (max ``checked_at``), independent of any
+    run slicer / page filter, so the banner always reflects the live deployment.
+    """
+    _latest = (
+        "VAR _ts = MAXX(ALL(gold_release), gold_release[checked_at]) "
+        "RETURN MAXX(FILTER(ALL(gold_release), gold_release[checked_at] = _ts), gold_release[{col}])"
+    )
+    defs = [
+        ("Release Status", _latest.format(col="status"), "",
+         "Deployed FAR version banner text from the latest release row "
+         "(e.g. 'FAR v2026.06.0 - up to date' or 'Update available: ...')."),
+        ("Release Note", _latest.format(col="update_note"), "",
+         "Short upgrade note shown beside the version banner when a newer release exists (blank otherwise)."),
+    ]
+    out = []
+    for name, expr, fmt, desc in defs:
+        out.append({
+            "name": name,
+            "expression": expr,
+            "formatString": fmt,
+            "description": desc,
+            "lineageTag": _lineage("measure", name),
+        })
+    return out
+
+
 def _severity_matrix_measures() -> List[Dict[str, Any]]:
     """Severity colour measure placed on ``gold_severity_matrix`` (heatmap series)."""
     defs = [
@@ -339,6 +373,8 @@ def _table(table) -> Dict[str, Any]:
         t["measures"] = _bpa_measures()
     if table.name == SEVERITY_MATRIX_TABLE:
         t["measures"] = _severity_matrix_measures()
+    if table.name == RELEASE_TABLE:
+        t["measures"] = _release_measures()
     if table.name in (PARTITION_TABLE, RELATIONSHIP_TABLE, HIERARCHY_TABLE):
         t["measures"] = _internals_measures(table.name)
     return t
